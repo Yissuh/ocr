@@ -12,7 +12,7 @@ cap = cv2.VideoCapture(0)
 layer_names = ["feature_fusion/Conv_7/Sigmoid", "feature_fusion/concat_3"]
 
 # Function to decode EAST output and extract bounding boxes
-def decode_predictions(scores, geometry, conf_threshold=0.4):
+def decode_predictions(scores, geometry, conf_threshold=0.6):
     rects = []
     confidences = []
     
@@ -78,8 +78,8 @@ while True:
     # Apply Non-Maximum Suppression (NMS)
     boxes = non_max_suppression(np.array(rects), probs=confidences)
 
-    # Draw bounding boxes
-    for (startX, startY, endX, endY) in boxes:
+    # Draw bounding boxes with confidence score above them
+    for i, ((startX, startY, endX, endY), conf) in enumerate(zip(boxes, confidences)):
         # Rescale to original frame size
         startX = int(startX * rW)
         startY = int(startY * rH)
@@ -94,8 +94,13 @@ while True:
         # Draw bounding box
         cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
-    # Show the real-time text detection
+        # Display confidence score above the box
+        text = f"Text Detected {conf:.2f}"  # Format confidence to 2 decimal places
+        cv2.putText(orig, text, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 
+                    0.5, (0, 255, 0), 2)
+
     cv2.imshow("EAST Text Detection", orig)
+
 
     # Exit on 'q' key
     if cv2.waitKey(1) & 0xFF == ord('q'):
